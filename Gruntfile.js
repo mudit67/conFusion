@@ -1,8 +1,12 @@
 'use strict';
 
+const { registerTask } = require('grunt');
+
 module.exports = function(grunt) {
     require('time-grunt')(grunt);
-    require('jit-grunt')(grunt);
+    require('jit-grunt')(grunt, {
+        useminPrepare: 'grunt-usemin'
+    });
     grunt.initConfig({
         sass: {
             dist: {
@@ -31,8 +35,129 @@ module.exports = function(grunt) {
                     }
                 }
             }
+        },
+        copy: {
+            html: {
+                files: [{
+                    expand: true,
+                    dot: true,
+                    cwd: './',
+                    src: ['*.html'],
+                    dest: 'dist'
+                }]
+            },
+            font: {
+                files: [{
+                    expand:true,
+                    dot: true,
+                    cwd: 'node_modules/font-awesome',
+                    src: ['fonts/*.*'],
+                    dest: 'dist'
+                }]
+            }
+        },
+        clean: {
+            build:{
+                src:['dist/']
+            }
+        },
+        imagemin: {
+            dynamic: {
+                files: [{
+                    expand: true,
+                    cwd: './',
+                    src: ['img/*.{png,jpg,gif}'],
+                    dest: 'dist/'
+                }]
+            }
+        },
+        useminPrepare: {
+            foo: {
+                src: ['*.html'],
+                dest: 'dist'
+            },
+            options: {
+                flow: {
+                    steps:{
+                        css: ['cssmin'],
+                        js:['uglify']
+                    },
+                    post: {
+                        css: [{
+                            name: 'cssmin',
+                            createConfig: function (context, block) {
+                            var generated = context.options.generated;
+                                generated.options = {
+                                    keepSpecialComments: 0, rebase: false
+                                };
+                            }       
+                        }]
+                    }
+                }
+            }
+        },
+        concat: {
+            options: {
+                separator: ';'
+            },
+            dist: []
+        },
+        uglify: {
+            dist:[]
+        },
+        cssmin: {
+            dist: []
+        },
+        filerev: {
+            options: {
+                encoding: 'utf8',
+                algorithm: 'md5',
+                length: '20'
+            },
+            release: {
+                files: [{
+                    src: [
+                        'dist/css/*.css',
+                        'dist/js/*.js'
+                    ]
+                }]
+            }
+        },
+    usemin: {
+        html: ['dist/*.html'],
+        options: {
+            assestsDirs: [
+                'dist',
+                'dist/js',
+                'dist/css'
+            ]
         }
+    },
+    htmlmin: {
+        dist: {
+            options: {
+                collapseWhiteSpace: true
+            },
+            files: {
+                'dist/index.html': 'dist/index.html',  
+                'dist/contactus.html': 'dist/contactus.html',
+                'dist/aboutus.html': 'dist/aboutus.html'
+            }
+        }
+    }
     });
     grunt.registerTask('css',['sass']);
     grunt.registerTask('default',['browserSync','watch']);
+    grunt:registerTask('build',[
+        'clean',
+        'copy',
+        'imagemin',
+        'useminPrepare',
+        'concat',
+        'cssmin',
+        'uglify',
+        'filerev',
+        'usemin',
+        'htmlmin'
+    ]);
 };
